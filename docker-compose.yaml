@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  hazelcast:
+    image: hazelcast/hazelcast:5.3
+    container_name: hazelcast
+    ports:
+      - "5701:5701"  # Porta padrão de comunicação
+    environment:
+      - HZ_HEAP_SIZE=256m  # Reduz memória heap para consumo leve
+      - JAVA_OPTS=-Dhazelcast.local.publicAddress=127.0.0.1:5701
+    networks:
+      - hazelcast-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+networks:
+  hazelcast-net:
+    driver: bridge

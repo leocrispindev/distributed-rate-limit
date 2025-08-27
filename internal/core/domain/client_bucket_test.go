@@ -10,7 +10,7 @@ import (
 
 type ClientTokensBucketTestSuite struct {
 	suite.Suite
-	bucket *domain.ClientTokensBucket
+	bucket *domain.Bucket
 }
 
 func TestClientTokensBucketTestSuite(t *testing.T) {

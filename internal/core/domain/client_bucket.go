@@ -6,34 +6,47 @@ import (
 )
 
 const (
-	maxTokens  = 5
-	refillRate = 1000 //miliseconds
+	BucketPrefix       = "bucket_"
+	ClientBucketPrefix = "client_"
+	maxTokens          = 5
+	refillRate         = 10 //miliseconds
 )
 
-type ClientTokensBucket struct {
-	Tokens         int   `json:"tokens"`
-	LastRefillTime int64 `json:"last_refill_time"`
+type BucketRequest struct {
+	Name string `json:"name"`
 }
 
-func NewClientBucket() *ClientTokensBucket {
+type BucketResponse struct {
+	Name string `json:"name"`
+	ID   string `json:"id"`
+}
 
-	return &ClientTokensBucket{
+type Bucket struct {
+	Name           string `json:"name"`
+	ApiId          string `json:"api_id"`
+	Tokens         int    `json:"tokens"`
+	LastRefillTime int64  `json:"last_refill_time"`
+}
+
+func NewClientBucket() *Bucket {
+
+	return &Bucket{
 		Tokens:         maxTokens,
 		LastRefillTime: time.Now().UnixMilli(),
 	}
 }
 
-func (bucket *ClientTokensBucket) hasAvailableTokens() bool {
+func (bucket *Bucket) hasAvailableTokens() bool {
 	return bucket.Tokens > 0
 }
 
-func (bucket *ClientTokensBucket) consumeToken() {
+func (bucket *Bucket) consumeToken() {
 	if bucket.Tokens > 0 {
 		bucket.Tokens--
 	}
 }
 
-func (bucket *ClientTokensBucket) AcquireToken() bool {
+func (bucket *Bucket) AcquireToken() bool {
 	bucket.refillIfNeeded()
 
 	if bucket.hasAvailableTokens() {
@@ -43,7 +56,7 @@ func (bucket *ClientTokensBucket) AcquireToken() bool {
 	return false
 }
 
-func (bucket *ClientTokensBucket) refillIfNeeded() {
+func (bucket *Bucket) refillIfNeeded() {
 	now := time.Now().UnixMilli()
 	if bucket.shouldRefill(now) {
 		bucket.Tokens = maxTokens
@@ -51,11 +64,11 @@ func (bucket *ClientTokensBucket) refillIfNeeded() {
 	}
 }
 
-func (bucket *ClientTokensBucket) shouldRefill(now int64) bool {
+func (bucket *Bucket) shouldRefill(now int64) bool {
 	elapsed := now - bucket.LastRefillTime
-	return elapsed > refillRate
+	return elapsed > int64(refillRate*1000)
 }
 
-func (bucket *ClientTokensBucket) ToByteArray() ([]byte, error) {
+func (bucket *Bucket) ToByteArray() ([]byte, error) {
 	return json.Marshal(bucket)
 }

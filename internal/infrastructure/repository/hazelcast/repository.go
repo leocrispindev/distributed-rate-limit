@@ -9,11 +9,26 @@ import (
 )
 
 const (
-	mapName = "client-buckets"
+	mapName = "buckets"
 )
 
 type HazelcastRepository struct {
 	hzClientMap *hazelcast.Map
+}
+
+func NewHazelcastClient() (*hazelcast.Client, error) {
+	config := hazelcast.Config{}
+
+	config.Cluster.Network.SetAddresses("127.0.0.1:5701")
+
+	// Conecta ao cluster
+	client, err := hazelcast.StartNewClientWithConfig(context.TODO(), config)
+	if err != nil {
+		log.Fatalf("Erro ao conectar ao Hazelcast: %v", err)
+	}
+
+	return client, nil
+
 }
 
 func NewHazelcastRepository(hzClient *hazelcast.Client) *HazelcastRepository {
@@ -39,4 +54,9 @@ func (hz *HazelcastRepository) SetWithTTL(ctx context.Context, key string, value
 	ttl := time.Duration(ttlSeconds) * time.Second
 
 	return hz.hzClientMap.SetWithTTL(ctx, key, value, ttl)
+}
+
+func (hz *HazelcastRepository) Delete(ctx context.Context, key string) error {
+	err := hz.hzClientMap.Delete(ctx, key)
+	return err
 }

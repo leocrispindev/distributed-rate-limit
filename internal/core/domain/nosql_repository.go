@@ -6,4 +6,5 @@ type NoSQLRepository interface {
 	Set(ctx context.Context, key string, value interface{}) error
 	Get(ctx context.Context, key string) (interface{}, error)
 	SetWithTTL(ctx context.Context, key string, value interface{}, ttlSeconds int) error
+	Delete(ctx context.Context, key string) error
 }

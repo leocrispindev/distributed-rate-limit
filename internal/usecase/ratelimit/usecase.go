@@ -13,14 +13,19 @@ type RateLimit interface {
 }
 
 type RateLimitUseCase struct {
-	repository domain.NoSQLRepository
+	repository        domain.NoSQLRepository
+	metricsRepository domain.MetricsRepository
 }
 
-func NewRateLimitUseCase(rep domain.NoSQLRepository) *RateLimitUseCase {
-	return &RateLimitUseCase{repository: rep}
+func NewRateLimitUseCase(rep domain.NoSQLRepository, metrics domain.MetricsRepository) *RateLimitUseCase {
+	return &RateLimitUseCase{
+		repository:        rep,
+		metricsRepository: metrics,
+	}
 }
 
 func (uc *RateLimitUseCase) AllowAccess(ctx context.Context, clientId string) bool {
+
 	key := uc.getBucketKey(clientId)
 
 	bucket, err := uc.repository.Get(ctx, key)
@@ -31,16 +36,12 @@ func (uc *RateLimitUseCase) AllowAccess(ctx context.Context, clientId string) bo
 
 	clientBucket := bucket.(domain.Bucket)
 
+	defer uc.metricsRepository.CountMetric(clientBucket.Name)
+
 	avaliableToken := clientBucket.AcquireToken()
 	if !avaliableToken {
 		return false
 	}
-
-	/*data, err := clientBucket.ToByteArray()
-	if err != nil {
-		log.Println("error on marshal bucket for for=[" + key + "]")
-		return false
-	}*/
 
 	err = uc.repository.Set(ctx, key, clientBucket)
 	if err != nil {

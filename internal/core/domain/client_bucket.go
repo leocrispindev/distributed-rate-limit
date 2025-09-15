@@ -9,7 +9,7 @@ const (
 	BucketPrefix       = "bucket_"
 	ClientBucketPrefix = "client_"
 	maxTokens          = 5
-	refillRate         = 10 //miliseconds
+	refillRate         = 10
 )
 
 type BucketRequest struct {
@@ -66,7 +66,7 @@ func (bucket *Bucket) refillIfNeeded() {
 
 func (bucket *Bucket) shouldRefill(now int64) bool {
 	elapsed := now - bucket.LastRefillTime
-	return elapsed > int64(refillRate*1000)
+	return elapsed >= refillRate*1000
 }
 
 func (bucket *Bucket) ToByteArray() ([]byte, error) {

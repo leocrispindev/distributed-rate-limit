@@ -36,4 +36,7 @@ func SetupRoutes(router *gin.Engine) {
 	//metrics
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
+	//health
+	router.GET("/health", handler.HealthHandler)
+
 }

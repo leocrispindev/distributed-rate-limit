@@ -6,12 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const (
-	MaxTokens     = 100 // limite por minuto
-	RefillRate    = 100 // tokens por minuto
-	RefillSeconds = 60
-)
-
 func main() {
 	router := gin.Default()
 

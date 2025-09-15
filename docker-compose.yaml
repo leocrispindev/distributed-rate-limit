@@ -1,16 +1,66 @@
 version: "3.8"
 
 services:
+  api-service01: &api-service
+    image: leocrispindev/rate-limiter-api:v0.0.3 
+    hostname: service01
+    ports:
+      - "8080:8080"
+    depends_on:
+      - hazelcast
+    environment:
+      - HZ_CLUSTERNAME=dev
+      - HAZELCAST_HOST=hazelcast01:5701
+    networks:
+      rate-limiter-network:
+        aliases:
+          - service01
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: "110MB"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"] 
+      interval: 5s  
+      timeout: 2s    
+      retries: 3  
+      start_period: 5s
+
+  api-service-2:
+    <<: *api-service
+    image: leocrispindev/rate-limiter-api:v0.0.3 
+    hostname: service02
+    ports:
+      - "8081:8080"
+    networks:
+      rate-limiter-network:
+        aliases:
+          - service02
+
+  api-service-3:
+    <<: *api-service
+    image: leocrispindev/rate-limiter-api:v0.0.3 
+    hostname: service03
+    ports:
+      - "8082:8080"
+    networks:
+      rate-limiter-network:
+        aliases:
+          - service03
+    
   hazelcast:
     image: hazelcast/hazelcast:5.3
     container_name: hazelcast
     ports:
-      - "5701:5701"  # Porta padrão de comunicação
+      - "5701:5701" 
     environment:
       - HZ_HEAP_SIZE=256m  # Reduz memória heap para consumo leve
       - JAVA_OPTS=-Dhazelcast.local.publicAddress=127.0.0.1:5701
     networks:
-      - hazelcast-net
+      rate-limiter-network:
+        aliases:
+          - hazelcast01
     deploy:
       resources:
         limits:
@@ -22,12 +72,43 @@ services:
         - "9090:9090"
       volumes:
         - ./prometheus/:/etc/prometheus/
+      networks:
+        rate-limiter-network:
+          aliases:
+            - prometheus
 
   grafana:
       image: grafana/grafana
       ports:
         - "3000:3000"
+      networks:
+        rate-limiter-network:
+          aliases:
+            - grafana
+      volumes:
+        - grafana-storage:/var/lib/grafana
+  
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api-service01
+     # - api-service02
+    ports:
+      - "9999:9999" 
+    networks:
+      rate-limiter-network:
+        aliases:
+          - nginx
+    deploy:
+      resources:
+        limits:
+          cpus: "0.10"
+          memory: "30MB"
 
 networks:
-  hazelcast-net:
+  rate-limiter-network:
     driver: bridge
+volumes:
+  grafana-storage:

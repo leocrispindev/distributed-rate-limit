@@ -3,6 +3,8 @@ package hazelcast
 import (
 	"context"
 	"log"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/hazelcast/hazelcast-go-client"
@@ -19,7 +21,10 @@ type HazelcastRepository struct {
 func NewHazelcastClient() (*hazelcast.Client, error) {
 	config := hazelcast.Config{}
 
-	config.Cluster.Network.SetAddresses("127.0.0.1:5701")
+	instancesAddr := os.Getenv("HAZELCAST_HOST")
+	instancesHz := strings.Split(instancesAddr, ",")
+
+	config.Cluster.Network.SetAddresses(instancesHz...)
 
 	// Conecta ao cluster
 	client, err := hazelcast.StartNewClientWithConfig(context.TODO(), config)

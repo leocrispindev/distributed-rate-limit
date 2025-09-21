@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"concurrency-hazelcast/internal/core/domain"
 	"concurrency-hazelcast/internal/usecase/ratelimit"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -24,7 +26,21 @@ func (m *AuthorizationMiddleware) Middleware() gin.HandlerFunc {
 			return
 		}
 
-		allowed := m.ratelimitUseCase.AllowAccess(ctx.Request.Context(), clientId)
+		allowed, err := m.ratelimitUseCase.AllowAccess(ctx.Request.Context(), clientId)
+
+		if err != nil {
+			if errors.Is(err, domain.BucketNotFoundError("bucket not found")) {
+				ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+				ctx.Abort()
+				return
+			}
+
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+			ctx.Abort()
+			return
+
+		}
+
 		if !allowed {
 			ctx.JSON(429, gin.H{"error": "Rate limit exceeded"})
 			ctx.Abort()

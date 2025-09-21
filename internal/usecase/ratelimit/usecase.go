@@ -27,7 +27,7 @@ func NewRateLimitUseCase(rep domain.NoSQLRepository, metrics domain.MetricsRepos
 	}
 }
 
-func (uc *RateLimitUseCase) AllowAccess(ctx context.Context, clientId string) bool {
+func (uc *RateLimitUseCase) AllowAccess(ctx context.Context, clientId string) (bool, error) {
 
 	key := uc.getBucketKey(clientId)
 
@@ -37,26 +37,25 @@ func (uc *RateLimitUseCase) AllowAccess(ctx context.Context, clientId string) bo
 	bucket, err := uc.repository.Get(ctx, key)
 	if err != nil {
 		log.Println("error on get tokens for for=[" + key + "]")
-		return false
+		return false, err
 	}
 
 	if bucket == nil {
-		log.Println("bucket not found for for=[" + key + "]")
-		return false
+		return false, domain.BucketNotFoundError("bucket not found")
 	}
 
 	var clientBucket *domain.Bucket
 	json.Unmarshal(bucket.([]byte), &clientBucket)
 	if clientBucket == nil {
 		log.Println("error on parse bucket for for=[" + key + "]")
-		return false
+		return false, nil
 	}
 
 	uc.metricsRepository.CountMetric(clientBucket.Name)
 
 	avaliableToken := clientBucket.AcquireToken()
 	if !avaliableToken {
-		return false
+		return false, nil
 	}
 
 	payload, _ := clientBucket.ToByteArray()
@@ -64,10 +63,10 @@ func (uc *RateLimitUseCase) AllowAccess(ctx context.Context, clientId string) bo
 	err = uc.repository.Set(ctx, key, payload)
 	if err != nil {
 		log.Println("error on save bucket for for=[" + key + "]")
-		return false
+		return false, domain.ErrorOnUpdateBucket("error on save bucket for for=[" + key + "]")
 	}
 
-	return avaliableToken
+	return avaliableToken, nil
 
 }
 

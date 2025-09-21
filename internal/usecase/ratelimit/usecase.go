@@ -36,17 +36,16 @@ func (uc *RateLimitUseCase) AllowAccess(ctx context.Context, clientId string) bo
 
 	bucket, err := uc.repository.Get(ctx, key)
 	if err != nil {
-		log.Println(err.Error())
 		log.Println("error on get tokens for for=[" + key + "]")
 		return false
 	}
 
-	var clientBucket *domain.Bucket
 	if bucket == nil {
 		log.Println("bucket not found for for=[" + key + "]")
 		return false
 	}
 
+	var clientBucket *domain.Bucket
 	json.Unmarshal(bucket.([]byte), &clientBucket)
 	if clientBucket == nil {
 		log.Println("error on parse bucket for for=[" + key + "]")

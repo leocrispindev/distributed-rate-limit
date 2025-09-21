@@ -24,8 +24,9 @@ func NewHazelcastClient() (*hazelcast.Client, error) {
 	instancesAddr := os.Getenv("HAZELCAST_HOST")
 	instancesHz := strings.Split(instancesAddr, ",")
 
-	config.Cluster.Network.SetAddresses(instancesHz...)
-
+	for _, addr := range instancesHz {
+		config.Cluster.Network.SetAddresses(addr)
+	}
 	// Conecta ao cluster
 	client, err := hazelcast.StartNewClientWithConfig(context.TODO(), config)
 	if err != nil {

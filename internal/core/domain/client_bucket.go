@@ -8,8 +8,8 @@ import (
 const (
 	BucketPrefix       = "bucket_"
 	ClientBucketPrefix = "client_"
-	maxTokens          = 5
-	refillRate         = 10
+	maxTokens          = 100
+	refillRate         = 30
 )
 
 type BucketRequest struct {

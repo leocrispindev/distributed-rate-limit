@@ -20,13 +20,15 @@ func SetupRoutes(router *gin.Engine) {
 	//Hazelcast NoSQL
 	hzClient, _ := hazelcast.NewHazelcastClient()
 	NoSQLRepository := hazelcast.NewHazelcastRepository(hzClient)
+	//Hazelcast Lock
+	lockRepository := hazelcast.NewHazelcastLockRepository(hzClient)
 
 	// Create Token Bucket
 	createUseCase := createtokenbucket.NewCreateTokenBucketUseCase(NoSQLRepository)
 	createBucketHandler := handler.NewCreateBucketHandler(createUseCase)
 
 	//Middleware
-	rateLimitUseCase := ratelimit.NewRateLimitUseCase(NoSQLRepository, prometheusRepository)
+	rateLimitUseCase := ratelimit.NewRateLimitUseCase(NoSQLRepository, prometheusRepository, lockRepository)
 
 	authorizationMiddleware := middleware.NewAuthorizationMiddleware(rateLimitUseCase)
 

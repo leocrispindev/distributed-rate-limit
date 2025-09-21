@@ -43,7 +43,9 @@ func (uc *CreateTokenBucketUseCase) Create(ctx context.Context, bucket domain.Bu
 
 	bucketKey := domain.BucketPrefix + newBucket.ApiId
 
-	if err := uc.repo.Set(ctx, bucketKey, newBucket); err != nil {
+	payload, _ := newBucket.ToByteArray()
+
+	if err := uc.repo.Set(ctx, bucketKey, payload); err != nil {
 		return nil, errors.New("error creating bucket")
 	}
 

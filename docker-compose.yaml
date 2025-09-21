@@ -2,15 +2,17 @@ version: "3.8"
 
 services:
   api-service01: &api-service
-    image: leocrispindev/rate-limiter-api:v0.0.3 
+    image: leocrispindev/rate-limiter-api:v0.0.10 
     hostname: service01
     ports:
       - "8080:8080"
     depends_on:
       - hazelcast
+      - hazelcast2
+      - hazelcast3
     environment:
       - HZ_CLUSTERNAME=dev
-      - HAZELCAST_HOST=hazelcast01:5701
+      - HAZELCAST_HOST=hazelcast1:5701,hazelcast2:5701,hazelcast3:5701
     networks:
       rate-limiter-network:
         aliases:
@@ -29,7 +31,7 @@ services:
 
   api-service-2:
     <<: *api-service
-    image: leocrispindev/rate-limiter-api:v0.0.3 
+    image: leocrispindev/rate-limiter-api:v0.0.10
     hostname: service02
     ports:
       - "8081:8080"
@@ -40,7 +42,7 @@ services:
 
   api-service-3:
     <<: *api-service
-    image: leocrispindev/rate-limiter-api:v0.0.3 
+    image: leocrispindev/rate-limiter-api:v0.0.10
     hostname: service03
     ports:
       - "8082:8080"
@@ -49,23 +51,49 @@ services:
         aliases:
           - service03
     
-  hazelcast:
+  hazelcast: &hazelcast
     image: hazelcast/hazelcast:5.3
     container_name: hazelcast
     ports:
       - "5701:5701" 
     environment:
       - HZ_HEAP_SIZE=256m  # Reduz memória heap para consumo leve
-      - JAVA_OPTS=-Dhazelcast.local.publicAddress=127.0.0.1:5701
+      - HZ_CLUSTERNAME=dev
+      - HZ_NETWORK_JOIN_TCPIP_ENABLED=true
+      - HZ_NETWORK_JOIN_MULTICAST_ENABLED=false
+      - HZ_NETWORK_JOIN_TCPIP_MEMBERS=hazelcast2,hazelcast3
     networks:
       rate-limiter-network:
         aliases:
-          - hazelcast01
+          - hazelcast1
     deploy:
       resources:
         limits:
           memory: 512M
 
+  hazelcast2:
+    <<: *hazelcast
+    container_name: hazelcast2
+    ports:
+      - "5702:5701"
+    environment:
+      - HZ_NETWORK_JOIN_TCPIP_MEMBERS=hazelcast1,hazelcast3
+    networks:
+      rate-limiter-network:
+        aliases:
+          - hazelcast2
+
+  hazelcast3:
+    <<: *hazelcast
+    container_name: hazelcast3
+    ports:
+      - "5703:5701"
+    environment:
+      - HZ_NETWORK_JOIN_TCPIP_MEMBERS=hazelcast1,hazelcast2
+    networks:
+      rate-limiter-network:
+        aliases:
+          - hazelcast3
   prometheus:
       image: prom/prometheus
       ports:

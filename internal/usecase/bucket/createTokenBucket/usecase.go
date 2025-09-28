@@ -1,9 +1,10 @@
 package createtokenbucket
 
 import (
-	"concurrency-hazelcast/internal/core/domain"
 	"context"
 	"errors"
+
+	"github.com/leocrispindev/distributed-rate-limit/internal/core/domain"
 
 	"github.com/google/uuid"
 )
@@ -29,7 +30,7 @@ func (uc *CreateTokenBucketUseCase) Create(ctx context.Context, bucket domain.Bu
 	}
 
 	if exists != nil {
-		return nil, errors.New("bucket already exists")
+		return nil, domain.NewBucketAlreadyExistsError(bucket.Name, nil)
 	}
 
 	newBucket := *domain.NewClientBucket()
@@ -37,7 +38,7 @@ func (uc *CreateTokenBucketUseCase) Create(ctx context.Context, bucket domain.Bu
 	newBucket.ApiId = uuid.New().String()
 
 	if err := uc.repo.Set(ctx, clientKey, true); err != nil {
-		return nil, errors.New("error creating bucket")
+		return nil, err
 
 	}
 
@@ -46,7 +47,7 @@ func (uc *CreateTokenBucketUseCase) Create(ctx context.Context, bucket domain.Bu
 	payload, _ := newBucket.ToByteArray()
 
 	if err := uc.repo.Set(ctx, bucketKey, payload); err != nil {
-		return nil, errors.New("error creating bucket")
+		return nil, err
 	}
 
 	return &domain.BucketResponse{

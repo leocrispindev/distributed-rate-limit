@@ -1,12 +1,12 @@
 package delivery
 
 import (
-	"concurrency-hazelcast/internal/delivery/middleware"
-	"concurrency-hazelcast/internal/handler"
-	"concurrency-hazelcast/internal/infrastructure/repository/hazelcast"
-	"concurrency-hazelcast/internal/infrastructure/repository/prometheus"
-	createtokenbucket "concurrency-hazelcast/internal/usecase/bucket/createTokenBucket"
-	"concurrency-hazelcast/internal/usecase/ratelimit"
+	"github.com/leocrispindev/distributed-rate-limit/internal/delivery/middleware"
+	"github.com/leocrispindev/distributed-rate-limit/internal/handler"
+	"github.com/leocrispindev/distributed-rate-limit/internal/infrastructure/repository/hazelcast"
+	"github.com/leocrispindev/distributed-rate-limit/internal/infrastructure/repository/prometheus"
+	createtokenbucket "github.com/leocrispindev/distributed-rate-limit/internal/usecase/bucket/createTokenBucket"
+	"github.com/leocrispindev/distributed-rate-limit/internal/usecase/ratelimit"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 

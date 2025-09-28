@@ -1,10 +1,11 @@
 package ratelimit
 
 import (
-	"concurrency-hazelcast/internal/core/domain"
 	"context"
 	"encoding/json"
 	"log"
+
+	"github.com/leocrispindev/distributed-rate-limit/internal/core/domain"
 )
 
 const ()
@@ -41,7 +42,7 @@ func (uc *RateLimitUseCase) AllowAccess(ctx context.Context, clientId string) (b
 	}
 
 	if bucket == nil {
-		return false, domain.BucketNotFoundError("bucket not found")
+		return false, domain.NewBucketNotFoundError("bucket not found for=["+key+"]", nil)
 	}
 
 	var clientBucket *domain.Bucket
@@ -63,7 +64,7 @@ func (uc *RateLimitUseCase) AllowAccess(ctx context.Context, clientId string) (b
 	err = uc.repository.Set(ctx, key, payload)
 	if err != nil {
 		log.Println("error on save bucket for for=[" + key + "]")
-		return false, domain.ErrorOnUpdateBucket("error on save bucket for for=[" + key + "]")
+		return false, domain.NewBucketUpdateFailedError("error on save bucket for for=["+key+"]", err)
 	}
 
 	return avaliableToken, nil

@@ -1,31 +1,77 @@
 package domain
 
-type BucketNotFoundError string
+import "errors"
 
-func (e BucketNotFoundError) Error() string {
-	return string(e)
+var (
+	ErrBucketNotFound      = errors.New("bucket not found")
+	ErrBucketAlreadyExists = errors.New("bucket already exists")
+	ErrLockFailed          = errors.New("failed to acquire lock")
+	ErrUnlockFailed        = errors.New("failed to release lock")
+	ErrBucketUpdateFailed  = errors.New("failed to update bucket")
+	ErrSetKeyFailed        = errors.New("failed to set key in repository")
+)
+
+type CoreError struct {
+	Type    error
+	Message string
+	Err     error
 }
 
-type LockError string
-
-func (e LockError) Error() string {
-	return string(e)
+func (e *CoreError) Error() string {
+	if e.Err != nil {
+		return e.Type.Error() + ": " + e.Message + " -> " + e.Err.Error()
+	}
+	return e.Type.Error() + ": " + e.Message
 }
 
-type UnlockError string
-
-func (e UnlockError) Error() string {
-	return string(e)
+func (e *CoreError) Unwrap() error {
+	return e.Type
 }
 
-type BucketAlreadyExistsError string
-
-func (e BucketAlreadyExistsError) Error() string {
-	return string(e)
+func NewBucketNotFoundError(message string, err error) *CoreError {
+	return &CoreError{
+		Type:    ErrBucketNotFound,
+		Message: message,
+		Err:     err,
+	}
 }
 
-type ErrorOnUpdateBucket string
+func NewBucketAlreadyExistsError(message string, err error) *CoreError {
+	return &CoreError{
+		Type:    ErrBucketAlreadyExists,
+		Message: message,
+		Err:     err,
+	}
+}
 
-func (e ErrorOnUpdateBucket) Error() string {
-	return string(e)
+func NewLockFailedError(message string, err error) *CoreError {
+	return &CoreError{
+		Type:    ErrLockFailed,
+		Message: message,
+		Err:     err,
+	}
+}
+
+func NewUnlockFailedError(message string, err error) *CoreError {
+	return &CoreError{
+		Type:    ErrUnlockFailed,
+		Message: message,
+		Err:     err,
+	}
+}
+
+func NewBucketUpdateFailedError(message string, err error) *CoreError {
+	return &CoreError{
+		Type:    ErrBucketUpdateFailed,
+		Message: message,
+		Err:     err,
+	}
+}
+
+func NewSetKeyFailedError(message string, err error) *CoreError {
+	return &CoreError{
+		Type:    ErrSetKeyFailed,
+		Message: message,
+		Err:     err,
+	}
 }

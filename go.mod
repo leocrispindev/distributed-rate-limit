@@ -1,4 +1,4 @@
-module concurrency-hazelcast
+module github.com/leocrispindev/distributed-rate-limit
 
 go 1.25
 

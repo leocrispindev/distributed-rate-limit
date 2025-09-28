@@ -1,8 +1,9 @@
 package domain_test
 
 import (
-	"concurrency-hazelcast/internal/core/domain"
 	"testing"
+
+	"github.com/leocrispindev/distributed-rate-limit/internal/core/domain"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"

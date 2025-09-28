@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/hazelcast/hazelcast-go-client"
+	"github.com/leocrispindev/distributed-rate-limit/internal/core/domain"
 )
 
 const (
@@ -53,7 +54,11 @@ func (hz *HazelcastRepository) Get(ctx context.Context, key string) (interface{}
 }
 
 func (hz *HazelcastRepository) Set(ctx context.Context, key string, value interface{}) error {
-	return hz.hzClientMap.Set(ctx, key, value)
+	if err := hz.hzClientMap.Set(ctx, key, value); err != nil {
+		return domain.NewSetKeyFailedError("key: "+key, err)
+	}
+
+	return nil
 }
 
 func (hz *HazelcastRepository) SetWithTTL(ctx context.Context, key string, value interface{}, ttlSeconds int) error {

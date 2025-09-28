@@ -1,9 +1,11 @@
 package handler
 
 import (
-	"concurrency-hazelcast/internal/core/domain"
-	createtokenbucket "concurrency-hazelcast/internal/usecase/bucket/createTokenBucket"
+	"errors"
 	"net/http"
+
+	"github.com/leocrispindev/distributed-rate-limit/internal/core/domain"
+	createtokenbucket "github.com/leocrispindev/distributed-rate-limit/internal/usecase/bucket/createTokenBucket"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,6 +33,10 @@ func (h *CreateBucketHandler) Handler(ctx *gin.Context) {
 
 	resp, err := h.createUseCase.Create(ctx.Request.Context(), bucket)
 	if err != nil {
+		if errors.Is(err, domain.ErrBucketAlreadyExists) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

@@ -1,63 +1,81 @@
-# Gin Project
+# Distributed Lock and Rate Limiting API
 
-This is a simple API project built using the Gin framework in Go. The project is structured to separate concerns, making it easier to manage and extend.
+Projeto desenvolvido em Golang que implementa controle de concorrência com distributed lock e rate limiting por cliente, utilizando o Hazelcast para gerenciamento de estado compartilhado e o Nginx como balanceador de carga.
 
-## Project Structure
+O algoritmo de rate limiting adotado é o Fixed Window Time, no qual cada cliente possui um número limitado de requisições permitido dentro de um intervalo de tempo definido. Ao término desse período, a cota de requisições é automaticamente renovada, garantindo simplicidade no controle de acesso e previsibilidade no consumo.
 
+## Arquitetura
+
+- **Load Balancer (Nginx)** → roteia tráfego.
+- **Rate Limit Cluster (APIs em Go)** → múltiplas réplicas para resiliência e escalabilidade.
+- **Hazelcast Cluster** → armazenamento em memória + locks distribuídos.
+- **Observabilidade** → Prometheus (métricas) + Grafana (dashboards).
+
+![Architecture](archtecture.png)
+
+---
+
+## Resiliência: múltiplas instâncias
+
+### API
+- Evita downtime em falhas (alta disponibilidade).
+- Permite **escalabilidade horizontal**.
+- Suporta **rolling updates** sem indisponibilidade.
+- Stateless (estado no Hazelcast).
+
+### Hazelcast
+- **Replicação de dados**: evita perda em falhas.
+- **Quorum**: garante consistência do cluster.
+- **Distribuição de carga**: baixa latência em alto volume.
+- **Locks distribuídos**: controle de race condition.
+
+👉 Produção: **mínimo 3 nós Hazelcast** + **2–3 réplicas da API**.
+
+---
+
+## Uso do Hazelcast
+
+1. **Armazenamento em memória** → estado do cliente (contador, janela, bucket).
+2. **Distributed Lock** → garante exclusão mútua por cliente.
+3. **Chave única por cliente** → mesma key para lock e dados → evita race condition.
+
+---
+
+## Endpoints
+
+#### Validate rate limit middleware
+
+
+```bash
+curl -X GET http://localhost:9999/example \
+  -H "X-Api-Id: <client-id>"
 ```
-gin-project
-├── cmd
-│   └── main.go          # Entry point of the application
-├── internal
-│   ├── delivery
-│   │   └── router.go    # Defines the API routes
-│   └── handler
-│       └── handler.go    # Contains handler functions for API endpoints
-├── go.mod                # Module definition and dependencies
-└── README.md             # Project documentation
+
+#### Response
+```json
+{
+   "message": "Hello World"
+}
 ```
 
-## Getting Started
-
-### Prerequisites
-
-- Go 1.16 or later
-- Gin framework
-
-### Installation
-
-1. Clone the repository:
-
-   ```
-   git clone <repository-url>
-   cd gin-project
-   ```
-
-2. Install the dependencies:
-
-   ```
-   go mod tidy
-   ```
-
-### Running the Application
-
-To run the application, execute the following command:
-
-```
-go run cmd/main.go
+#### Create Client
+```bash
+curl -X POST http://localhost:9999/bucket \
+  -H "Content-Type: application/json" \
+  -d '{"name":"client123"}'
 ```
 
-The server will start and listen for incoming requests.
+#### Response 
+```json
+{
+  "name": "client123",
+  "id": "efc8cd40-2574-489f-8be8-79802b5a623a"
+}
+```
 
-### API Endpoints
-
-- Define your API endpoints in `internal/handler/handler.go`.
-- Set up the routes in `internal/delivery/router.go`.
-
-### Contributing
-
-Feel free to submit issues or pull requests for any improvements or features you'd like to see.
-
-### License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
+### Execução local (Docker Compose)
+```bash
+git clone https://github.com/leocrispindev/distributed-rate-limit.git
+cd distributed-rate-limit
+docker-compose up -d
+```

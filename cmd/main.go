@@ -1,7 +1,7 @@
 package main
 
 import (
-	"concurrency-hazelcast/internal/delivery"
+	"github.com/leocrispindev/distributed-rate-limit/internal/delivery"
 
 	"github.com/gin-gonic/gin"
 )

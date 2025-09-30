@@ -3,7 +3,6 @@ import { check, sleep } from 'k6';
 import { Counter } from 'k6/metrics';
 import { scenario } from 'k6/execution';
 
-// Contadores
 export let success200 = new Counter('success200');
 export let status429 = new Counter('status429');
 
@@ -24,7 +23,7 @@ export const options = {
           duration: '10s',         // 50 reqs
           preAllocatedVUs: 20,
           maxVUs: 50,
-          startTime: '34s',        // começa logo após phase1
+          startTime: '34s',     
         },
       },
   thresholds: {

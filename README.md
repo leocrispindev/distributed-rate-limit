@@ -79,3 +79,9 @@ git clone https://github.com/leocrispindev/distributed-rate-limit.git
 cd distributed-rate-limit
 docker-compose up -d
 ```
+
+### Test
+É possível testar a aplicação utilizando o K6:
+```bash
+k6 run test-rate-limit.js
+```

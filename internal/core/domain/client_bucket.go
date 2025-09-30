@@ -2,6 +2,7 @@ package domain
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -9,7 +10,7 @@ const (
 	BucketPrefix       = "bucket_"
 	ClientBucketPrefix = "client_"
 	maxTokens          = 100
-	refillRate         = 30
+	refillRate         = 60
 )
 
 type BucketRequest struct {
@@ -61,6 +62,7 @@ func (bucket *Bucket) refillIfNeeded() {
 	if bucket.shouldRefill(now) {
 		bucket.Tokens = maxTokens
 		bucket.LastRefillTime = now
+		fmt.Println("Refilled tokens to max for client bucket: ", bucket.Name)
 	}
 }
 

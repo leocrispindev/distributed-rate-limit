@@ -1,54 +1,52 @@
 # Distributed Lock and Rate Limiting API
 
-Projeto desenvolvido em Golang que implementa controle de concorrência com distributed lock e rate limiting por cliente, utilizando o Hazelcast para gerenciamento de estado compartilhado e o Nginx como balanceador de carga.
+This project, built in **Golang**, implements concurrency control with **distributed locking** and **per-client rate limiting**, using **Hazelcast** for shared state management and **Nginx** as a load balancer.
 
-O algoritmo de rate limiting adotado é o Fixed Window Time, no qual cada cliente possui um número limitado de requisições permitido dentro de um intervalo de tempo definido. Ao término desse período, a cota de requisições é automaticamente renovada, garantindo simplicidade no controle de acesso e previsibilidade no consumo.
+The rate limiting algorithm used is **Fixed Window Time**, where each client is allowed a fixed number of requests within a given time window. Once the window expires, the quota is automatically reset, providing both simplicity in access control and predictability in usage.
 
-## Arquitetura
+## Architecture
 
-- **Load Balancer (Nginx)** → roteia tráfego.
-- **Rate Limit Cluster (APIs em Go)** → múltiplas réplicas para resiliência e escalabilidade.
-- **Hazelcast Cluster** → armazenamento em memória + locks distribuídos.
-- **Observabilidade** → Prometheus (métricas) + Grafana (dashboards).
+- **Load Balancer (Nginx)** → routes incoming traffic.  
+- **Rate Limit Cluster (Go APIs)** → multiple replicas for resilience and scalability.  
+- **Hazelcast Cluster** → in-memory storage + distributed locks.  
+- **Observability** → Prometheus (metrics) + Grafana (dashboards).  
 
 ![Architecture](archtecture.png)
 
 ---
 
-## Resiliência: múltiplas instâncias
+## Resilience: Multiple Instances
 
 ### API
-- Evita downtime em falhas (alta disponibilidade).
-- Permite **escalabilidade horizontal**.
-- Suporta **rolling updates** sem indisponibilidade.
-- Stateless (estado no Hazelcast).
+- Prevents downtime in case of failures (**high availability**).  
+- Enables **horizontal scalability**.  
+- Supports **rolling updates** with zero downtime.  
+- Stateless (state stored in Hazelcast).  
 
 ### Hazelcast
-- **Replicação de dados**: evita perda em falhas.
-- **Quorum**: garante consistência do cluster.
-- **Distribuição de carga**: baixa latência em alto volume.
-- **Locks distribuídos**: controle de race condition.
+- **Data replication**: protects against data loss during failures.  
+- **Quorum**: ensures cluster consistency.  
+- **Load distribution**: maintains low latency under heavy traffic.  
+- **Distributed locks**: prevents race conditions.  
 
-👉 Produção: **mínimo 3 nós Hazelcast** + **2–3 réplicas da API**.
+👉 Production recommendation: **minimum of 3 Hazelcast nodes** + **2–3 API replicas**.  
 
 ---
 
-## Uso do Hazelcast
+## Hazelcast Usage
 
-1. **Armazenamento em memória** → estado do cliente (contador, janela, bucket).
-2. **Distributed Lock** → garante exclusão mútua por cliente.
-3. **Chave única por cliente** → mesma key para lock e dados → evita race condition.
+1. **In-memory storage** → holds client state (counter, window, bucket).  
+2. **Distributed lock** → enforces mutual exclusion per client.  
+3. **Unique client key** → same key for both lock and data → eliminates race conditions.  
 
 ---
 
 ## Endpoints
 
-#### Validate rate limit middleware
-
+#### Validate Rate Limit Middleware
 
 ```bash
-curl -X GET http://localhost:9999/example \
-  -H "X-Api-Id: <client-id>"
+curl -X GET http://localhost:9999/example -H "X-Api-Id: <client-id>"
 ```
 
 #### Response
@@ -60,9 +58,7 @@ curl -X GET http://localhost:9999/example \
 
 #### Create Client
 ```bash
-curl -X POST http://localhost:9999/bucket \
-  -H "Content-Type: application/json" \
-  -d '{"name":"client123"}'
+curl -X POST http://localhost:9999/bucket -H "Content-Type: application/json"   -d '{"name":"client123"}'
 ```
 
 #### Response 
@@ -73,15 +69,28 @@ curl -X POST http://localhost:9999/bucket \
 }
 ```
 
-### Execução local (Docker Compose)
+---
+
+### Local Execution (Docker Compose)
 ```bash
 git clone https://github.com/leocrispindev/distributed-rate-limit.git
 cd distributed-rate-limit
+```
+or 
+```txt
+copy the docker-compose file
+```
+1.1
+```bash
 docker-compose up -d
+
 ```
 
-### Test
-É possível testar a aplicação utilizando o K6:
+
+
+
+### Testing
+You can test the application using **K6**:
 ```bash
 k6 run test-rate-limit.js
 ```
